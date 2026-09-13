@@ -11,15 +11,14 @@ class ClipboardManager:
     def __init__(self, root):
         self.root = root
         self.root.title("Gestor de Mensajes Rápidos")
-        self.root.geometry("850x550")
-        self.root.minsize(650, 400)
+        self.root.geometry("900x550")
+        self.root.minsize(700, 400)
         
         self.root.attributes('-topmost', True) 
         
         self.data = self.load_data()
         self.current_category = "Todos los mensajes"
         
-        # Variables para el tooltip (ventanita al posar el cursor)
         self.tooltip_win = None
         self.tooltip_id = None
         self.hovered_item = None
@@ -28,11 +27,8 @@ class ClipboardManager:
         self.update_categories()
         self.refresh_list()
         
-        # Atajos globales
         keyboard.add_hotkey('ctrl+space+k', self.trigger_show_window)
         keyboard.add_hotkey('ctrl+space+p', self.trigger_paste_selected)
-        
-        # Atajo local: apretar Enter dentro de la app también pega
         self.root.bind('<Return>', lambda e: self.paste_selected())
 
     def load_data(self):
@@ -40,11 +36,11 @@ class ClipboardManager:
             return []
         with open(CSV_FILE, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
-            return [{'id': int(row['id']), 'category': row['category'], 'text': row['text'], 'count': int(row['count'])} for row in reader]
+            return [{'id': int(row['id']), 'name': row.get('name', f"Mensaje {row['id']}"), 'category': row['category'], 'text': row['text'], 'count': int(row['count'])} for row in reader]
 
     def save_data(self):
         with open(CSV_FILE, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=['id', 'category', 'text', 'count'])
+            writer = csv.DictWriter(f, fieldnames=['id', 'name', 'category', 'text', 'count'])
             writer.writeheader()
             writer.writerows(self.data)
 
@@ -80,19 +76,20 @@ class ClipboardManager:
         search_entry = ttk.Entry(search_frame, textvariable=self.search_var)
         search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
         
-        columns = ("texto", "usos", "categoria")
+        columns = ("nombre", "texto", "usos", "categoria")
         self.tree = ttk.Treeview(right_frame, columns=columns, show="headings", selectmode="browse")
+        self.tree.heading("nombre", text="Nombre")
         self.tree.heading("texto", text="Mensaje")
         self.tree.heading("usos", text="Usos")
         self.tree.heading("categoria", text="Categoría")
         
-        self.tree.column("texto", width=400)
+        self.tree.column("nombre", width=150)
+        self.tree.column("texto", width=300)
         self.tree.column("usos", width=50, anchor=tk.CENTER)
         self.tree.column("categoria", width=120)
         
         self.tree.pack(fill=tk.BOTH, expand=True)
         
-        # --- Binds para el Tooltip ---
         self.tree.bind("<Motion>", self.on_tree_motion)
         self.tree.bind("<Leave>", self.on_tree_leave)
         
@@ -108,26 +105,27 @@ class ClipboardManager:
         add_frame = ttk.LabelFrame(right_frame, text="Agregar Nuevo Mensaje", padding=10)
         add_frame.pack(fill=tk.X, pady=(10, 0))
         
-        ttk.Label(add_frame, text="Categoría:").grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
+        ttk.Label(add_frame, text="Nombre:").grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
+        self.new_name_entry = ttk.Entry(add_frame, width=20)
+        self.new_name_entry.grid(row=0, column=1, padx=5, pady=5, sticky=tk.W)
+        
+        ttk.Label(add_frame, text="Categoría:").grid(row=0, column=2, padx=5, pady=5, sticky=tk.W)
         self.new_cat_entry = ttk.Entry(add_frame, width=20)
-        self.new_cat_entry.grid(row=0, column=1, padx=5, pady=5, sticky=tk.W)
+        self.new_cat_entry.grid(row=0, column=3, padx=5, pady=5, sticky=tk.W)
         
         ttk.Label(add_frame, text="Mensaje:").grid(row=1, column=0, padx=5, pady=5, sticky=tk.NW)
         self.new_text_entry = tk.Text(add_frame, height=3, width=50)
-        self.new_text_entry.grid(row=1, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.new_text_entry.grid(row=1, column=1, columnspan=3, padx=5, pady=5, sticky=tk.EW)
         
-        ttk.Button(add_frame, text="Guardar Mensaje", command=self.add_message).grid(row=1, column=2, padx=10, sticky=tk.S)
+        ttk.Button(add_frame, text="Guardar Mensaje", command=self.add_message).grid(row=1, column=4, padx=10, sticky=tk.S)
         add_frame.columnconfigure(1, weight=1)
 
-    # --- Funciones del Tooltip ---
     def on_tree_motion(self, event):
         item_id = self.tree.identify_row(event.y)
-        # Si el mouse se movió a una fila diferente
         if item_id != self.hovered_item:
             self.cancel_tooltip()
             self.hovered_item = item_id
             if item_id:
-                # Esperamos 500ms antes de mostrar el tooltip para que no titile constantemente
                 self.tooltip_id = self.root.after(500, self.show_tooltip, event.x_root, event.y_root, item_id)
 
     def on_tree_leave(self, event):
@@ -137,16 +135,14 @@ class ClipboardManager:
         if not self.tree.exists(item_id):
             return
             
-        text = self.tree.item(item_id, 'values')[0]
+        text = self.tree.item(item_id, 'values')[1]
         
         self.tooltip_win = tk.Toplevel(self.root)
-        self.tooltip_win.wm_overrideredirect(True) # Quita los bordes de la ventana
-        self.tooltip_win.attributes('-topmost', True) # Debe estar por encima de nuestra app
+        self.tooltip_win.wm_overrideredirect(True) 
+        self.tooltip_win.attributes('-topmost', True) 
         
-        # Posicionamos el tooltip un poco desplazado del cursor
         self.tooltip_win.wm_geometry(f"+{x + 15}+{y + 10}")
         
-        # wraplength limita el ancho del texto para que no sea infinito horizontalmente
         label = tk.Label(self.tooltip_win, text=text, justify='left', 
                          background="#ffffe0", relief='solid', borderwidth=1, 
                          font=("Arial", 10), wraplength=500, padx=5, pady=5)
@@ -160,7 +156,6 @@ class ClipboardManager:
             self.tooltip_win.destroy()
             self.tooltip_win = None
         self.hovered_item = None
-    # ----------------------------
 
     def update_categories(self):
         self.cat_listbox.delete(0, tk.END)
@@ -186,7 +181,7 @@ class ClipboardManager:
             self.refresh_list()
 
     def refresh_list(self):
-        self.cancel_tooltip() # Cancelamos cualquier tooltip al recargar la lista
+        self.cancel_tooltip() 
         for item in self.tree.get_children():
             self.tree.delete(item)
             
@@ -200,25 +195,28 @@ class ClipboardManager:
             filtered_data = [m for m in self.data if m['category'] == self.current_category]
             
         if search_term:
-            filtered_data = [m for m in filtered_data if search_term in m['text'].lower()]
+            filtered_data = [m for m in filtered_data if search_term in m['text'].lower() or search_term in m.get('name', '').lower()]
             
         filtered_data.sort(key=lambda x: x['count'], reverse=True)
         
         for m in filtered_data:
-            self.tree.insert("", tk.END, values=(m['text'], m['count'], m['category']), tags=(str(m['id']),))
+            self.tree.insert("", tk.END, values=(m.get('name', 'Sin Nombre'), m['text'], m['count'], m['category']), tags=(str(m['id']),))
 
     def add_message(self):
+        name = self.new_name_entry.get().strip()
         cat = self.new_cat_entry.get().strip()
         text = self.new_text_entry.get("1.0", tk.END).strip()
         
-        if not cat or not text:
-            messagebox.showwarning("Error", "La categoría y el mensaje no pueden estar vacíos.")
+        if not name or not cat or not text:
+            messagebox.showwarning("Error", "El nombre, la categoría y el mensaje no pueden estar vacíos.")
             return
             
         new_id = 1 if not self.data else max(m['id'] for m in self.data) + 1
-        self.data.append({'id': new_id, 'category': cat, 'text': text, 'count': 0})
+        self.data.append({'id': new_id, 'name': name, 'category': cat, 'text': text, 'count': 0})
         self.save_data()
+        self.data = self.load_data() # Recarga forzada
         
+        self.new_name_entry.delete(0, tk.END)
         self.new_text_entry.delete("1.0", tk.END)
         self.update_categories()
         self.refresh_list()
@@ -234,6 +232,7 @@ class ClipboardManager:
             self.data = [m for m in self.data if m['id'] != msg_id]
             
             self.save_data()
+            self.data = self.load_data() # Recarga forzada
             self.update_categories()
             self.refresh_list()
 
@@ -251,11 +250,15 @@ class ClipboardManager:
             
         edit_win = tk.Toplevel(self.root)
         edit_win.title("Editar Mensaje")
-        edit_win.geometry("500x250")
+        edit_win.geometry("500x320")
         edit_win.transient(self.root) 
         edit_win.grab_set() 
         
-        ttk.Label(edit_win, text="Categoría:").pack(anchor=tk.W, padx=10, pady=(10,0))
+        ttk.Label(edit_win, text="Nombre:").pack(anchor=tk.W, padx=10, pady=(10,0))
+        name_var = tk.StringVar(value=msg_to_edit.get('name', ''))
+        ttk.Entry(edit_win, textvariable=name_var).pack(fill=tk.X, padx=10, pady=5)
+        
+        ttk.Label(edit_win, text="Categoría:").pack(anchor=tk.W, padx=10, pady=(5,0))
         cat_var = tk.StringVar(value=msg_to_edit['category'])
         ttk.Entry(edit_win, textvariable=cat_var).pack(fill=tk.X, padx=10, pady=5)
         
@@ -265,17 +268,20 @@ class ClipboardManager:
         text_widget.insert("1.0", msg_to_edit['text'])
         
         def save_edit():
+            new_name = name_var.get().strip()
             new_cat = cat_var.get().strip()
             new_text = text_widget.get("1.0", tk.END).strip()
             
-            if not new_cat or not new_text:
-                messagebox.showwarning("Error", "La categoría y el mensaje no pueden estar vacíos.", parent=edit_win)
+            if not new_name or not new_cat or not new_text:
+                messagebox.showwarning("Error", "Todos los campos son obligatorios.", parent=edit_win)
                 return
                 
+            msg_to_edit['name'] = new_name
             msg_to_edit['category'] = new_cat
             msg_to_edit['text'] = new_text
             
             self.save_data()
+            self.data = self.load_data() # Recarga forzada
             self.update_categories()
             self.refresh_list()
             edit_win.destroy()
@@ -289,7 +295,7 @@ class ClipboardManager:
             
         msg_id = int(self.tree.item(selected[0], "tags")[0])
         item = self.tree.item(selected[0])
-        msg_text = item['values'][0]
+        msg_text = item['values'][1]
         
         for m in self.data:
             if m['id'] == msg_id:
@@ -297,6 +303,7 @@ class ClipboardManager:
                 break
         
         self.save_data()
+        self.data = self.load_data() # Recarga forzada (opcional aquí, pero mantiene consistencia)
         self.refresh_list()
         
         self.root.clipboard_clear()
