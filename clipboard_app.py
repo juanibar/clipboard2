@@ -54,6 +54,9 @@ class ClipboardManager:
         self.root.deiconify()
         self.root.focus_force()
 
+    def update_opacity(self, value):
+        self.root.attributes('-alpha', float(value))
+
     def setup_ui(self):
         left_frame = ttk.Frame(self.root, width=200, padding=10)
         left_frame.pack(side=tk.LEFT, fill=tk.Y)
@@ -63,6 +66,11 @@ class ClipboardManager:
         self.cat_listbox = tk.Listbox(left_frame, exportselection=False, font=("Arial", 10))
         self.cat_listbox.pack(fill=tk.BOTH, expand=True)
         self.cat_listbox.bind('<<ListboxSelect>>', self.on_category_select)
+        
+        # --- Barra de Transparencia ---
+        ttk.Label(left_frame, text="Opacidad:", font=("Arial", 10)).pack(anchor=tk.W, pady=(15, 5))
+        self.alpha_scale = ttk.Scale(left_frame, from_=0.2, to=1.0, value=1.0, orient=tk.HORIZONTAL, command=self.update_opacity)
+        self.alpha_scale.pack(fill=tk.X)
         
         right_frame = ttk.Frame(self.root, padding=10)
         right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
@@ -214,7 +222,7 @@ class ClipboardManager:
         new_id = 1 if not self.data else max(m['id'] for m in self.data) + 1
         self.data.append({'id': new_id, 'name': name, 'category': cat, 'text': text, 'count': 0})
         self.save_data()
-        self.data = self.load_data() # Recarga forzada
+        self.data = self.load_data() 
         
         self.new_name_entry.delete(0, tk.END)
         self.new_text_entry.delete("1.0", tk.END)
@@ -232,7 +240,7 @@ class ClipboardManager:
             self.data = [m for m in self.data if m['id'] != msg_id]
             
             self.save_data()
-            self.data = self.load_data() # Recarga forzada
+            self.data = self.load_data() 
             self.update_categories()
             self.refresh_list()
 
@@ -281,7 +289,7 @@ class ClipboardManager:
             msg_to_edit['text'] = new_text
             
             self.save_data()
-            self.data = self.load_data() # Recarga forzada
+            self.data = self.load_data() 
             self.update_categories()
             self.refresh_list()
             edit_win.destroy()
@@ -303,7 +311,7 @@ class ClipboardManager:
                 break
         
         self.save_data()
-        self.data = self.load_data() # Recarga forzada (opcional aquí, pero mantiene consistencia)
+        self.data = self.load_data() 
         self.refresh_list()
         
         self.root.clipboard_clear()
