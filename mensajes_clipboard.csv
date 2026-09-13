@@ -1,6 +1,6 @@
 id,category,text,count
 1,Saludos,"Hola como estas? un gusto saludarte!
-En que te podemos ayudar?",19
+En que te podemos ayudar?",21
 2,Saludos,"Hola como estas? muchas gracias por tu compra!
 En breve estará en camino.
 
@@ -9,3 +9,30 @@ En las bolsas de papel donde estan los kits vas en contrar un QR para acceder a 
 https://nosoynormalcerveceria.com/page/tutoriales
 
 Cualquier duda consultanos.",3
+3,Membresia,"Listo Walter te va a llegar un email con la confirmación y el acceso.
+Siempre podes iniciar sesión con tus datos en este link para ver todo el contenido de la membresia: https://nosoynormalcerveceria.com/login
+
+Te dejamos estos links para que te unas a los diferentes grupos y accedas a otro contenido
+
+WhatsApp: https://chat.whatsapp.com/CepD7XO6w1WGikeC5GwTR2?mode=ac_t
+
+Telegram: (se actualiza semanalmente, pedinos si te interesa)
+
+Inteligencias artificiales: https://nosoynormalcerveceria.com/page/inteligencia-artificial
+
+Calculadoras para productores: https://nosoynormalcerveceria.com/page/aplicaciones-para-productores
+
+Blog con contenido exclusivo: https://nosoynormalcerveceria.com/blog
+
+Videos exclusivos: https://nosoynormalcerveceria.com/curso/contenido-exclusivo-para-suscriptores
+
+Drive con documentos: https://drive.google.com/drive/folders/1xMQiLbi0tYOFasnZP2VMJFMB-zqoEFeq",1
+4,Links,https://nosoynormalcerveceria.com/c/cursos-online,0
+5,Links,https://nosoynormalcerveceria.com/p/suscripcion-nosoynormal,0
+6,Links,https://www.mercadolibre.com.ar/pagina/nsncerveceria#from=share_eshop,0
+7,Conversacion,"Listo! te va a llegar un email con la confirmacion y el acceso.
+Cualquier cosita que necesites podes consultarnos a este mismo whatsapp.
+
+Si en algun momento necesitas volver a iniciar sesion lo haces con tus datos en este link: https://nosoynormalcerveceria.com/login",1
+8,Membresia,"Hola como estas? muchas gracias por el comprobante, ya lo marcamos!",0
+9,Saludos,Hola como estas? un gusto saludarte!,1
